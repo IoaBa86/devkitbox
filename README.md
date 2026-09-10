@@ -1,5 +1,7 @@
 # DevKitBox
 
+[![CI](https://github.com/IoaBa86/devkitbox/actions/workflows/ci.yml/badge.svg)](https://github.com/IoaBa86/devkitbox/actions/workflows/ci.yml)
+
 **Your Developer Toolbox for Windows**
 
 DevKitBox is a local-first desktop toolbox for Windows containing the everyday

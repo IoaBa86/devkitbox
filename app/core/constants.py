@@ -7,8 +7,7 @@ APP_VERSION = "1.0.0"
 ORG_NAME = "DevKitBox"
 WEBSITE_URL = "https://devkitbox.net"
 
-# No public repository exists yet. Do not invent one — leave unset until real.
-GITHUB_URL: str | None = None
+GITHUB_URL: str | None = "https://github.com/IoaBa86/devkitbox"
 
 DB_FILENAME = "devkitbox.sqlite3"
 LOG_FILENAME = "devkitbox.log"

@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.core.app_context import AppContext
-from app.core.constants import APP_DISPLAY_NAME, APP_TAGLINE, APP_VERSION, WEBSITE_URL
+from app.core.constants import APP_DISPLAY_NAME, APP_TAGLINE, APP_VERSION, GITHUB_URL, WEBSITE_URL
 from app.core.paths import get_log_dir
 
 _ACCENT_PRESETS = {
@@ -198,6 +198,11 @@ class SettingsPage(QWidget):
         website = QLabel(f'<a href="{WEBSITE_URL}">{WEBSITE_URL}</a>')
         website.setOpenExternalLinks(True)
         layout.addWidget(website)
+
+        if GITHUB_URL:
+            github = QLabel(f'<a href="{GITHUB_URL}">{GITHUB_URL}</a>')
+            github.setOpenExternalLinks(True)
+            layout.addWidget(github)
 
         made_by = QLabel('Made by <a href="https://ibakas.com">Ioannis Bakas</a>')
         made_by.setOpenExternalLinks(True)
