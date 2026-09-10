@@ -62,14 +62,6 @@ def test_network_settings_roundtrip(settings_service):
     assert settings.verify_ssl_certificates is False
 
 
-def test_check_for_updates_enabled_defaults_false_and_persists(settings_service):
-    assert settings_service.load().check_for_updates_enabled is False
-
-    settings_service.set("check_for_updates_enabled", True)
-
-    assert settings_service.load().check_for_updates_enabled is True
-
-
 def test_set_unknown_key_raises(settings_service):
     with pytest.raises(KeyError):
         settings_service.set("not_a_real_setting", "value")

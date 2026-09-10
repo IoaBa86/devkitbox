@@ -72,6 +72,17 @@ def test_check_for_update_non_200_raises_network_error():
         check_for_update()
 
 
+def test_check_for_update_404_raises_friendly_network_error():
+    with (
+        patch(
+            "app.services.update_service.send_request",
+            return_value=_fake_response("", status=404),
+        ),
+        pytest.raises(NetworkError, match="No release has been published yet"),
+    ):
+        check_for_update()
+
+
 def test_check_for_update_invalid_json_raises_network_error():
     with (
         patch("app.services.update_service.send_request", return_value=_fake_response("not json")),

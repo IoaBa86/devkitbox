@@ -186,16 +186,10 @@ class SettingsPage(QWidget):
 
         layout.addWidget(QLabel(f"Current version: {APP_VERSION}"))
 
-        self._auto_update_check = QCheckBox("Automatically check for updates on startup")
-        self._auto_update_check.setChecked(self.context.settings.check_for_updates_enabled)
-        self._auto_update_check.toggled.connect(self._on_auto_update_toggled)
-        layout.addWidget(self._auto_update_check)
-
         note = QLabel(
-            "DevKitBox never checks for updates in the background, even with "
-            "the setting above on — checks only happen when you press the "
-            "button below, per the app's privacy guarantee. The preference "
-            "above is saved for when startup checking is added."
+            "DevKitBox never checks for updates in the background — checks "
+            "only happen when you press the button below, per the app's "
+            "privacy guarantee."
         )
         note.setWordWrap(True)
         note.setObjectName("toolDescription")
@@ -273,10 +267,6 @@ class SettingsPage(QWidget):
     def _on_verify_ssl_toggled(self, checked: bool) -> None:
         self.context.settings.verify_ssl_certificates = checked
         self.context.settings_service.set("verify_ssl_certificates", checked)
-
-    def _on_auto_update_toggled(self, checked: bool) -> None:
-        self.context.settings.check_for_updates_enabled = checked
-        self.context.settings_service.set("check_for_updates_enabled", checked)
 
     def _on_check_for_updates(self) -> None:
         self._check_updates_button.setEnabled(False)

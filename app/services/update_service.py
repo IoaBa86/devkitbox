@@ -62,6 +62,8 @@ def check_for_update(
         headers={"Accept": "application/vnd.github+json", "User-Agent": APP_NAME},
     )
     response = send_request(request, timeout=timeout, proxy_url=proxy_url, verify_ssl=verify_ssl)
+    if response.status_code == 404:
+        raise NetworkError("No release has been published yet")
     if response.status_code != 200:
         raise NetworkError(f"GitHub returned {response.status_code} {response.reason}")
 

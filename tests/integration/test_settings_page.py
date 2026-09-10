@@ -37,16 +37,6 @@ def test_network_tab_verify_ssl_persists(qtbot, context):
     assert context.settings_service.load().verify_ssl_certificates is False
 
 
-def test_updates_tab_auto_update_persists(qtbot, context):
-    page = SettingsPage(context)
-    qtbot.addWidget(page)
-
-    page._auto_update_check.setChecked(True)
-
-    assert context.settings.check_for_updates_enabled is True
-    assert context.settings_service.load().check_for_updates_enabled is True
-
-
 def test_updates_tab_shows_current_version(qtbot, context):
     from PySide6.QtWidgets import QLabel
 

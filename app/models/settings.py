@@ -37,9 +37,6 @@ class AppSettings:
     http_proxy_url: str = ""
     verify_ssl_certificates: bool = True
 
-    # Updates
-    check_for_updates_enabled: bool = False
-
 
 SETTINGS_FIELD_TYPES: dict[str, type] = {
     "theme": str,
@@ -58,5 +55,4 @@ SETTINGS_FIELD_TYPES: dict[str, type] = {
     "request_timeout_seconds": int,
     "http_proxy_url": str,
     "verify_ssl_certificates": bool,
-    "check_for_updates_enabled": bool,
 }
