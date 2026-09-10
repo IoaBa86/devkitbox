@@ -6,7 +6,7 @@ import os
 import subprocess
 import sys
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QObject, QThread, Signal
 from PySide6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
@@ -25,7 +25,9 @@ from PySide6.QtWidgets import (
 
 from app.core.app_context import AppContext
 from app.core.constants import APP_DISPLAY_NAME, APP_TAGLINE, APP_VERSION, GITHUB_URL, WEBSITE_URL
+from app.core.exceptions import DevKitBoxError
 from app.core.paths import get_log_dir
+from app.services.update_service import UpdateCheckResult, check_for_update
 
 _ACCENT_PRESETS = {
     "Violet": "#7C5CFF",
@@ -34,6 +36,25 @@ _ACCENT_PRESETS = {
     "Amber": "#FFB454",
     "Coral": "#FF6B6B",
 }
+
+
+class _UpdateCheckWorker(QObject):
+    finished = Signal(object)
+    failed = Signal(str)
+
+    def __init__(self, timeout: float, proxy_url: str, verify_ssl: bool) -> None:
+        super().__init__()
+        self._timeout = timeout
+        self._proxy_url = proxy_url
+        self._verify_ssl = verify_ssl
+
+    def run(self) -> None:
+        try:
+            result = check_for_update(self._timeout, self._proxy_url, self._verify_ssl)
+        except DevKitBoxError as exc:
+            self.failed.emit(exc.message)
+            return
+        self.finished.emit(result)
 
 
 class SettingsPage(QWidget):
@@ -171,14 +192,26 @@ class SettingsPage(QWidget):
         layout.addWidget(self._auto_update_check)
 
         note = QLabel(
-            "No update source is configured yet, so this setting has no effect "
-            "for now — DevKitBox never checks for updates in the background "
-            "regardless. It's saved here so update checking can be turned on "
-            "later without changing your preference."
+            "DevKitBox never checks for updates in the background, even with "
+            "the setting above on — checks only happen when you press the "
+            "button below, per the app's privacy guarantee. The preference "
+            "above is saved for when startup checking is added."
         )
         note.setWordWrap(True)
         note.setObjectName("toolDescription")
         layout.addWidget(note)
+
+        self._check_updates_thread: QThread | None = None
+        self._check_updates_worker: _UpdateCheckWorker | None = None
+
+        self._check_updates_button = QPushButton("Check for Updates")
+        self._check_updates_button.clicked.connect(self._on_check_for_updates)
+        layout.addWidget(self._check_updates_button)
+
+        self._update_status_label = QLabel("")
+        self._update_status_label.setWordWrap(True)
+        self._update_status_label.setOpenExternalLinks(True)
+        layout.addWidget(self._update_status_label)
 
         layout.addStretch(1)
         return tab
@@ -244,6 +277,40 @@ class SettingsPage(QWidget):
     def _on_auto_update_toggled(self, checked: bool) -> None:
         self.context.settings.check_for_updates_enabled = checked
         self.context.settings_service.set("check_for_updates_enabled", checked)
+
+    def _on_check_for_updates(self) -> None:
+        self._check_updates_button.setEnabled(False)
+        self._update_status_label.setText("Checking...")
+
+        settings = self.context.settings
+        self._check_updates_thread = QThread(self)
+        self._check_updates_worker = _UpdateCheckWorker(
+            settings.request_timeout_seconds,
+            settings.http_proxy_url,
+            settings.verify_ssl_certificates,
+        )
+        self._check_updates_worker.moveToThread(self._check_updates_thread)
+        self._check_updates_thread.started.connect(self._check_updates_worker.run)
+        self._check_updates_worker.finished.connect(self._on_update_check_finished)
+        self._check_updates_worker.failed.connect(self._on_update_check_failed)
+        self._check_updates_worker.finished.connect(self._check_updates_thread.quit)
+        self._check_updates_worker.failed.connect(self._check_updates_thread.quit)
+        self._check_updates_thread.finished.connect(self._check_updates_worker.deleteLater)
+        self._check_updates_thread.start()
+
+    def _on_update_check_finished(self, result: UpdateCheckResult) -> None:
+        self._check_updates_button.setEnabled(True)
+        if result.is_update_available:
+            self._update_status_label.setText(
+                f"Version {result.latest_version} is available — "
+                f'<a href="{result.release_url}">view release</a>'
+            )
+        else:
+            self._update_status_label.setText("You're up to date.")
+
+    def _on_update_check_failed(self, message: str) -> None:
+        self._check_updates_button.setEnabled(True)
+        self._update_status_label.setText(f"Update check failed: {message}")
 
     def _on_accent_changed(self, name: str) -> None:
         color = _ACCENT_PRESETS[name]
